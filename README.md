@@ -1,6 +1,6 @@
 # VBA-challenge
 Uses VBA scripts to achieve analysis of stock data over three years
-
+```
 Sub CalculateYearlyChangeAndVolumeForAllSheets()
     Dim ws As Worksheet
     Dim lastRow As Long
@@ -115,4 +115,4 @@ Sub CalculateYearlyChangeAndVolumeForAllSheets()
         ws.Cells(4, "P").Value = greatestVolume
     Next ws
 End Sub
-
+```
