@@ -1,2 +1,118 @@
 # VBA-challenge
 Uses VBA scripts to achieve analysis of stock data over three years
+
+Sub CalculateYearlyChangeAndVolumeForAllSheets()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim tickerColumn As Range
+    Dim tickerSymbol As String
+    Dim openingPrice As Double
+    Dim closingPrice As Double
+    Dim yearlyChange As Double
+    Dim percentChange As Double
+    Dim totalVolume As Double
+    Dim outputRow As Long
+    Dim previousTicker As String
+    Dim greatestIncreaseTicker As String
+    Dim greatestDecreaseTicker As String
+    Dim greatestVolumeTicker As String
+    Dim greatestIncrease As Double
+    Dim greatestDecrease As Double
+    Dim greatestVolume As Double
+    
+    ' Loop through each worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        ' Find the last row with data in column A
+        lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+        
+        ' Set the ticker symbol column
+        Set tickerColumn = ws.Range("A2:A" & lastRow)
+        
+        ' Initialize output row and previousTicker
+        outputRow = 2 ' Starting row in column I
+        previousTicker = ""
+        greatestIncrease = 0
+        greatestDecrease = 0
+        greatestVolume = 0
+        
+        ' Loop through each ticker symbol
+        For Each tickerCell In tickerColumn
+            tickerSymbol = tickerCell.Value
+            
+            ' Check if the ticker symbol has changed
+            If tickerSymbol <> previousTicker Then
+                ' If it's not the first ticker symbol, output previous results
+                If previousTicker <> "" Then
+                    ws.Cells(outputRow, "I").Value = previousTicker
+                    ws.Cells(outputRow, "J").Value = yearlyChange
+                    ws.Cells(outputRow, "K").Value = percentChange / 100 ' Divide by 100 for percentage
+                    ws.Cells(outputRow, "L").Value = totalVolume
+                    
+                    ' Format the yearly change column
+                    If yearlyChange < 0 Then
+                        ws.Cells(outputRow, "J").Interior.Color = RGB(255, 0, 0) ' Red for negative values
+                    ElseIf yearlyChange > 0 Then
+                        ws.Cells(outputRow, "J").Interior.Color = RGB(0, 255, 0) ' Green for positive values
+                    End If
+                    
+                    ' Check for greatest increase, decrease, and volume
+                    If percentChange > greatestIncrease Then
+                        greatestIncrease = percentChange
+                        greatestIncreaseTicker = previousTicker
+                    End If
+                    If percentChange < greatestDecrease Then
+                        greatestDecrease = percentChange
+                        greatestDecreaseTicker = previousTicker
+                    End If
+                    If totalVolume > greatestVolume Then
+                        greatestVolume = totalVolume
+                        greatestVolumeTicker = previousTicker
+                    End If
+                    
+                    ' Move to the next output row
+                    outputRow = outputRow + 1
+                End If
+                
+                ' Reset values for the new ticker symbol
+                openingPrice = tickerCell.Offset(0, 2).Value
+                totalVolume = tickerCell.Offset(0, 6).Value
+                previousTicker = tickerSymbol
+            End If
+            
+            ' Update closing price for the same ticker symbol
+            closingPrice = tickerCell.Offset(0, 5).Value
+            
+            ' Calculate yearly change and percent change
+            yearlyChange = closingPrice - openingPrice
+            percentChange = (yearlyChange / openingPrice) * 100
+            
+            ' Sum total volume for the same ticker symbol
+            totalVolume = totalVolume + tickerCell.Offset(0, 6).Value
+        Next tickerCell
+        
+        ' Output the last ticker symbol's results
+        ws.Cells(outputRow, "I").Value = tickerSymbol
+        ws.Cells(outputRow, "J").Value = yearlyChange
+        ws.Cells(outputRow, "K").Value = percentChange / 100 ' Divide by 100 for percentage
+        ws.Cells(outputRow, "L").Value = totalVolume
+        
+        ' Format the yearly change column for the last ticker symbol
+        If yearlyChange < 0 Then
+            ws.Cells(outputRow, "J").Interior.Color = RGB(255, 0, 0) ' Red for negative values
+        ElseIf yearlyChange > 0 Then
+            ws.Cells(outputRow, "J").Interior.Color = RGB(0, 255, 0) ' Green for positive values
+        End If
+        
+        ' Output greatest increase, decrease, and volume
+        ws.Cells(2, "N").Value = "Greatest % Increase"
+        ws.Cells(2, "O").Value = greatestIncreaseTicker
+        ws.Cells(2, "P").Value = Format(Round(greatestIncrease / 100, 2), "0.00%") ' Divide by 100 for percentage
+        ws.Cells(3, "N").Value = "Greatest % Decrease"
+        ws.Cells(3, "O").Value = greatestDecreaseTicker
+        ws.Cells(3, "P").Value = Format(Round(greatestDecrease / 100, 2), "0.00%") ' Divide by 100 for percentage
+        ws.Cells(4, "N").Value = "Greatest Total Volume"
+        ws.Cells(4, "O").Value = greatestVolumeTicker
+        ws.Cells(4, "P").Value = greatestVolume
+    Next ws
+End Sub
+
